@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webcam Access</title>
+    <style>
+        #videoElement {
+            width: 640px;
+            height: 480px;
+            background-color: #666;
+        }
+        button {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Turn on Webcam</h1>
+
+    <!-- Video element to display the webcam feed -->
+    <video id="videoElement" autoplay></video>
+
+    <!-- Button to switch on the webcam -->
+    <button id="webcamButton" onclick="startWebcam()">Turn On Webcam</button>
+
+    <!-- Error display -->
+    <p id="errorMessage" style="color: red;"></p>
+
+    <script>
+        // Function to start the webcam stream
+        function startWebcam() {
+            const video = document.getElementById('videoElement');
+            const errorMessage = document.getElementById('errorMessage');
+
+            // Check if browser supports mediaDevices and getUserMedia
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(function(stream) {
+                        video.srcObject = stream;
+                        errorMessage.innerHTML = ""; // Clear any previous error messages
+                    })
+                    .catch(function(err) {
+                        console.error("Error accessing webcam: ", err);
+                        errorMessage.innerHTML = "Error accessing webcam: " + err.message;
+                    });
+            } else {
+                alert("Webcam access is not supported in this browser.");
+                errorMessage.innerHTML = "Webcam access is not supported in this browser.";
+            }
+        }
+    </script>
+</body>
+</html>
