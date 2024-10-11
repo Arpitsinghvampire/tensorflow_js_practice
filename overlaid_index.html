@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Object Detection with Overlay on Video</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.13.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+
+    <style>
+        #videoWrapper {
+            position: relative;
+            width: 640px;
+            height: 480px;
+        }
+        #videoElement {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        #canvasElement {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1>Object Detection Overlay on Video</h1>
+
+    <div id="videoWrapper">
+        <!-- Video element for webcam feed -->
+        <video id="videoElement" autoplay muted></video>
+
+        <!-- Canvas for drawing detection boxes (overlaid on the video) -->
+        <canvas id="canvasElement"></canvas>
+    </div>
+
+    <button id="webcamButton" onclick="startWebcam()">Enable Webcam</button>
+
+    <script>
+        let video = document.getElementById('videoElement');
+        let canvas = document.getElementById('canvasElement');
+        let ctx = canvas.getContext('2d');
+        let model;
+
+        // Load the COCO-SSD object detection model
+        cocoSsd.load().then(function(loadedModel) {
+            model = loadedModel;
+            console.log("Model loaded successfully!");
+        });
+
+        // Function to start the webcam
+        function startWebcam() {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(stream) {
+                    video.srcObject = stream;
+                    video.onloadedmetadata = function() {
+                        video.play();
+                        detectFrame();
+                    };
+                })
+                .catch(function(err) {
+                    console.log("Error accessing webcam: " + err);
+                });
+        }
+
+        // Function to run object detection on each video frame
+        function detectFrame() {
+            // Ensure canvas matches the video size
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            // Run object detection
+            model.detect(video).then(function(predictions) {
+                // Clear previous drawings
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Draw detection boxes and labels on the canvas
+                predictions.forEach(function(prediction) {
+                    // Draw bounding box
+                    ctx.beginPath();
+                    ctx.rect(...prediction.bbox); // (x, y, width, height)
+                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = 'red';
+                    ctx.stroke();
+
+                    // Draw label and confidence score
+                    ctx.fillStyle = 'red';
+                    ctx.fillText(
+                        `${prediction.class} (${Math.round(prediction.score * 100)}%)`,
+                        prediction.bbox[0],
+                        prediction.bbox[1] > 10 ? prediction.bbox[1] - 5 : 10
+                    );
+                });
+
+                // Request the next video frame
+                requestAnimationFrame(detectFrame);
+            });
+        }
+    </script>
+</body>
+</html>
